@@ -2,7 +2,7 @@
  * ADC.c
  *
  *  Created on: Dec 5, 2019
- *      Author: Nick
+ *      Author: Maurice
  */
 #include <stdio.h>
 #include <stdint.h>

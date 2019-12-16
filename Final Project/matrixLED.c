@@ -2,14 +2,14 @@
  * matrixLED.c
  *
  *  Created on: Nov 25, 2019
- *      Author: Nick
+ *      Author: Nick and Maurice
  */
 #include "matrixLED.h"
 #include <stdio.h>
 #include "msp.h"
 #include<stdint.h>
 
-
+// zeroes out a matrix
 void reset_matrix(uint8_t matrix[32][32])
 {
     int i, j;
@@ -21,6 +21,8 @@ void reset_matrix(uint8_t matrix[32][32])
         }
     }
 }
+
+// sets address pins to input value adr
 void address(uint8_t adr)
 {
     if(adr==0 || adr==16)
@@ -136,6 +138,8 @@ void address(uint8_t adr)
         P5->OUT |= BIT4;   // D
     }
 }
+
+// reads values of given matrix and turns LEDs on based on the matrix values
 void read(uint8_t matrix[32][32])
 {
     int i, j, adr = 0, I;
@@ -149,7 +153,7 @@ void read(uint8_t matrix[32][32])
             P5->OUT &= ~BIT5;   // r1
             P4->OUT &= ~BIT2;   // b1
             P4->OUT &= ~BIT4;   // g1
-            if(matrix[i][j] == 2)
+            if(matrix[i][j] == 2) // if a snake, turn that LED green
             {
                 if(i<16)
                 {
@@ -164,7 +168,7 @@ void read(uint8_t matrix[32][32])
                     P4->OUT |= BIT5;   // g2
                 }
             }
-            else if(matrix[i][j] == 1)
+            else if(matrix[i][j] == 1) // if a apple turn that LED red
             {
                 if(i<16)
                 {
@@ -179,7 +183,7 @@ void read(uint8_t matrix[32][32])
                     P4->OUT &= ~BIT5;   // g2
                 }
             }
-            else if(matrix[i][j] == 0)
+            else if(matrix[i][j] == 0) // if zero, then turn LED off
             {
                 if(i<16)
                 {
@@ -194,7 +198,7 @@ void read(uint8_t matrix[32][32])
                     P4->OUT &= ~BIT5;   // g2
                 }
             }
-            else if(matrix[i][j] == 3)
+            else if(matrix[i][j] == 3) // if matrix value is 3, turn LED blue
             {
                 if(i<16)
                 {
@@ -209,7 +213,7 @@ void read(uint8_t matrix[32][32])
                     P4->OUT &= ~BIT5;   // g2
                 }
             }
-            P4->OUT ^= BIT3;
+            P4->OUT ^= BIT3; // toggle CLK to clock out RGB data to LED drivers on matrix LED
             P4->OUT ^= BIT3;
         }
         P6->OUT |= BIT5; // toggle LAT, capture data
@@ -218,12 +222,13 @@ void read(uint8_t matrix[32][32])
         P6->OUT |= BIT4; // OE disable outputs
         address(adr);
         P6->OUT &= ~BIT5; // LAT pass through data
-        adr++;
-        if(adr == 32) adr = 0;
+        adr++; // increment to next address
+        if(adr == 32) adr = 0; // once address reaches 32, set back to zero
     }
 
 }
 
+// configures the pins connected to matrix LED to outputs
 void config_matrix_led(void)
 {
     P5->DIR |= BIT5; // R1  *
@@ -243,6 +248,8 @@ void config_matrix_led(void)
     P6->DIR |= BIT5; // LAT *
     P4->DIR |= BIT3; // CLK *
 }
+
+// creates a matrix that displays snake
 void start_screen_matrix(uint8_t M[32][32]) {
     // S
                                            M[3][4] = 2; M[3][5] = 2; M[3][6] = 2; M[3][7] = 2;
@@ -281,6 +288,7 @@ void start_screen_matrix(uint8_t M[32][32]) {
     M[8][26] = 2; M[8][27] = 2; M[8][28] = 2; M[8][29] = 2;
 }
 
+// creates a matrix that displays "game over"
 void game_over_matrix(uint8_t M[32][32]) {
     // G
                               M[3][4] = 2; M[3][5] = 2; M[3][6] = 2;
@@ -340,6 +348,7 @@ void game_over_matrix(uint8_t M[32][32]) {
    M[15][19] = 2;                               M[15][22] = 2;
 }
 
+// function to test matrix LED functionality
 void test(void)
 {
     P5->OUT &= ~BIT5;   // r1

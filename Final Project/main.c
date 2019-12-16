@@ -16,7 +16,7 @@
 #include "i2c.h"
 //#include "ADC.h"
 
-void error(void)
+void error(void)//error for clock chnage 
 {
     volatile uint32_t i;
     P1->DIR |= BIT0;
@@ -25,7 +25,7 @@ void error(void)
         for(i = 20000; i > 0; i--); // Blink LED forever
     }
 }
-void (*fp)(void) = &toggle_routine;
+void (*fp)(void) = &toggle_routine;//toggle routine for LRA on and off
 void main(void)
 {
     // CONFIGURE MCLK TO 48MHZ (from: https://e2echina.ti.com/question_answer/microcontrollers/other_mcu/f/23/p/139193/391432)
@@ -81,49 +81,49 @@ void main(void)
         read(matrix); // read matrix values and update display accordingly
         if(DIR != 0)
         {
-            reset_matrix(matrix);
-            config_snake(matrix);
-            for(i = 0; i<50; i++);
-            put_Dir(0);
-            end = 0;
+            reset_matrix(matrix);//resets matrix to all 0's turning all led's off
+            config_snake(matrix);//sets up the snake game at starting position for snake and apple
+            for(i = 0; i<50; i++);//delay
+            put_Dir(0);//put direction to 0
+            end = 0;//set end to zero so that it will go into next whiel loop
         }
-        while(end == 0)
+        while(end == 0)//whiel end is 0
         {
-            d = 0;
-            for(i = 0; i<30; i++)
+            d = 0;//d = 0
+            for(i = 0; i<30; i++)//sets how fast the snake game play is based on how high for loop goes
             {
-                read(matrix);
-                ADC14->CTL0 |= ADC14_CTL0_SC;
+                read(matrix);//read matrix and update led accordingly
+                ADC14->CTL0 |= ADC14_CTL0_SC;//start conversions
             }
-            P3->OUT &= ~BIT0;
-            end = snake_play(matrix, &dec);
+            P3->OUT &= ~BIT0;//turn enable pin for LRA off
+            end = snake_play(matrix, &dec);//go into snake game play to update matrix and have the snake move and for end game conditions
         }
-        if(end == 2)
+        if(end == 2)//end game condition happened
         {
-            read(matrix);
-            if(d == 0)
+            read(matrix);//read matrix and update led accordingly
+            if(d == 0)//if dec = 0
             {
-                read(matrix);
-                toggle_routine();
-                for(j = 0; j<2000000; j++);
-                toggle_routine();
-                d = 1;
+                read(matrix);//read matrix and update led accordingly
+                toggle_routine();//turn on LRA
+                for(j = 0; j<2000000; j++);//delay
+                toggle_routine();//turn off LRA
+                d = 1;//d = 1
             }
-            reset_matrix(matrix);
-            game_over_matrix(matrix);
-            for(i = 0; i<500; i++)
+            reset_matrix(matrix);//reset matrix to 0 
+            game_over_matrix(matrix);//set matrix LED to game over screen
+            for(i = 0; i<500; i++)//delay
             {
-                read(matrix);
+                read(matrix);//read matrix and update led accordingly
             }
-            end = 1;
+            end = 1;//end = 1
         }
-            reset_matrix(matrix);
-            read(matrix);
-            start_screen_matrix(matrix);
-            read(matrix);
-            ADC14->CTL0 |= ADC14_CTL0_ENC | ADC14_CTL0_SC;
-            getDir(&DIR);
-            if(DIR != 0) sel = 1;
-            if(sel == 1) end = 0;
+            reset_matrix(matrix);//reset matrix to 0 
+            read(matrix);//read matrix and update led accordingly
+            start_screen_matrix(matrix);//sets matrix start screen
+            read(matrix);//read matrix and update led accordingly
+            ADC14->CTL0 |= ADC14_CTL0_ENC | ADC14_CTL0_SC;//enables and starts conversions
+            getDir(&DIR);//gets direction
+            if(DIR != 0) sel = 1;//if direction not zero sel =1 
+            if(sel == 1) end = 0;//if sel ==1 then end =0 to start a new game
     }
 }

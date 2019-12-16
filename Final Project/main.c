@@ -28,6 +28,7 @@ void error(void)
 void (*fp)(void) = &toggle_routine;
 void main(void)
 {
+    // CONFIGURE MCLK TO 48MHZ (from: https://e2echina.ti.com/question_answer/microcontrollers/other_mcu/f/23/p/139193/391432)
     // Transition to VCORE Level 1: AM0_LDO -> AM1_LDO
     uint32_t currentPowerState;
     currentPowerState = PCM->CTL0 & PCM_CTL0_CPM_MASK;
@@ -52,79 +53,32 @@ void main(void)
     // Select MCLK = HFXT
     CS->CTL1 = CS->CTL1 & ~(CS_CTL1_DIVM_MASK | CS_CTL1_SELM_MASK) | CS_CTL1_SELM__HFXTCLK;//CS_CTL1_SELS_MASK
     CS->KEY = 0; // Lock CS module from unintended accesses
-    // Output MCLK to port pin to demonstrate 48MHz operation
-    //P4->DIR |= BIT3;
-    // P4->SEL0 |= BIT3;
-    //P4->SEL1 &= ~BIT3;
 
-
-    /*PJ->SEL0 |= (BIT2 |BIT3);
-    PJ->SEL1 &= ~(BIT2 |BIT3);
-    CS->KEY = 0x695A;//unlocks access to change system and master clock
-    CS->CTL2 |= CS_CTL2_HFXTDRIVE;
-    CS->CTL2 |= CS_CTL2_HFXT_EN;
-    CS->CTL1 &= ~(CS_CTL1_SELS_MASK | CS_CTL1_SELM_MASK);//sets system and master clock bits to zero were originally 3
-    CS->CTL2 |= CS_CTL2_HFXTFREQ_6;//sets frequency of HFXT clock to between 40 and 48 MHz
-    CS->CTL1 |= CS_CTL1_SELS_5 | CS_CTL1_SELM_5;//sets system and master clock to select HFXT clock
-    CS->KEY = 0xA596;*/
-
-
-    /*__enable_irq();//enables interrupts and interrupt handlers
-    config_UART();//configures UARt
-
-    int i, j, u = 0;
-    uint8_t length = 1;
-    char k[] = "123456789";
-    char counter[] = "Counter:";
-    char clear[] = "|-";
-    for(j = 0; j<1000000000; j++)
-    {
-        for(i = 0; i<1000000; i++);
-        send_string((uint8_t *) counter,strlen(counter));//sends string over UARt by filling TXBuf with the sent string
-        for (i=0; i<1000000; i++);//Delay
-        send_string((uint8_t *)k[1] ,length);//sends string over UARt by filling TXBuf with the sent string
-        for (i=0; i<1000000; i++);//Delay
-        send_string((uint8_t *) clear,strlen(clear));//sends string over UARt by filling TXBuf with the sent string
-        for (i=0; i<1000000; i++);//Delay
-        u++;
-        if(u>10)length = 2;
-    }*/
-    /*char test0[] = "|\xD9";
-    char test1[] = "|-";
-    char test2[] = "Nick, it works  ";
-    char test3[] = "Go Buffs        ";
-    for (i=0; i<1000; i++);//Delay
-    send_string((uint8_t *) test0,strlen(test0));//sends string over UARt by filling TXBuf with the sent string
-    for (i=0; i<1000; i++);//Delay
-    send_string((uint8_t *) test1,strlen(test1));//sends string over UARt by filling TXBuf with the sent string
-    for (i=0; i<1000; i++);//Delay
-    send_string((uint8_t *) test2,strlen(test2));//sends string over UARt by filling TXBuf with the sent string
-    for (i=0; i<1000; i++);//Delay
-    send_string((uint8_t *) test3,strlen(test3));//sends string over UARt by filling TXBuf with the sent string
-    for (i=0; i<1000; i++);//Delay*/
-
-    srand(time(NULL));
+    srand(time(NULL)); // initialize random number generator for apples
     int i, end = 1, sel = 0, DIR = 0, j, dec = 0, d = 0;
-    uint8_t matrix[32][32] = {};
-    uint8_t dc = 90;
+    uint8_t matrix[32][32] = {}; // initialize zero matrix
+    uint8_t dc = 90; // pwm frequency for LRA
+    
+    // config peripherals
     config_i2c();
     config_pwm_gpio();
     config_pwm_timer();
     config_drv2605L(*fp);
     config_drv_gpio();
+    
     __enable_irq();//enables interrupts and interrupt handlers
     config_UART();//configures UARt
-    config_matrix_led();
-    start_screen_matrix(matrix);
-    read(matrix);
-    ADC14_GPIO_CONFIG();
-    ADC14_INIT();
-    start_pwm(dc);
+    config_matrix_led(); // configure pins for matrix led
+    start_screen_matrix(matrix); // create the start screen for snake
+    read(matrix); // read matrix values and update matrix LED pins accordingly
+    ADC14_GPIO_CONFIG(); // config adc
+    ADC14_INIT(); // initialize adc
+    start_pwm(dc); // initialize pwm signal on MSP432
     while(1)
     {
-        ADC14->CTL0 |= ADC14_CTL0_SC;
-        getDir(&DIR);
-        read(matrix);
+        ADC14->CTL0 |= ADC14_CTL0_SC; // begin adc conversion
+        getDir(&DIR); // get joystick direction based on adc conversion
+        read(matrix); // read matrix values and update display accordingly
         if(DIR != 0)
         {
             reset_matrix(matrix);
@@ -143,12 +97,6 @@ void main(void)
             }
             P3->OUT &= ~BIT0;
             end = snake_play(matrix, &dec);
-            /*if(dec == 1)
-            {
-                read(matrix);
-                for(j = 0; j<2000000; j++);
-                toggle_routine();
-            }*/
         }
         if(end == 2)
         {

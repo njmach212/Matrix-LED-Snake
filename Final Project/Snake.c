@@ -13,24 +13,24 @@
 #include "UART.h"
 #include <string.h>
 #include "gpio.h"
-volatile static int joy_dir;
-volatile static int snake_size;
+volatile static int joy_dir; //global variable to keep track of direction of the snak
+volatile static int snake_size; //global variable to keep track of size of snake
 
-uint8_t Tail_Move[100];
+uint8_t Tail_Move[100];// global array of size 100 to be used in circular buffer 
 
-typedef struct snake
+typedef struct snake //creates type snake with head 1 and 2 and tail one and 2 to keep track of position and t and h for the circular buffer 
 {
-   uint8_t head1, head2, tail1, tail2, h , t, size;
-   uint8_t *tail_move;
+   uint8_t head1, head2, tail1, tail2, h , t, size; //size keeps track of size for circular buffer 
+   uint8_t *tail_move;// points to array of tail movements
 }snake;
 
-snake Snake;
+snake Snake;//creates Snake of type snake
 
-void getDir(int *Dir)
+void getDir(int *Dir)//gets direction from global variable
 {
     *Dir = joy_dir;
 }
-void put_Dir(int Dir)
+void put_Dir(int Dir)// puts direction into global variable
 {
     joy_dir = Dir;
 }
@@ -55,7 +55,7 @@ int Get(snake *rs,uint8_t *byte)//removes byte from circular buffer created
     return 0;
 }
 
-void Rand_Apple(uint8_t *app1, uint8_t *app2)
+void Rand_Apple(uint8_t *app1, uint8_t *app2)// creates random spot for the apple to appear and increments snake size and turns on LRA
 {
     *app1 = rand()%30;
     *app2 = rand()%30;
@@ -63,7 +63,7 @@ void Rand_Apple(uint8_t *app1, uint8_t *app2)
     P3->OUT |= BIT0;
 }
 
-void config_snake(uint8_t matrix[32][32])
+void config_snake(uint8_t matrix[32][32])//comfigures snake matrix to set the starting point of the snake and apple and sets up the borders 
 {
     int i, j;
     for(i = 0; i<32; i++)
@@ -77,7 +77,7 @@ void config_snake(uint8_t matrix[32][32])
     matrix[16][16] = 2;
     matrix[16][25] = 1;
     snake_size = 1;
-    Snake.tail1 = 16;
+    Snake.tail1 = 16;//sets the tail head and locations as well as ets up the array for the tail direction and the circular buffer 
     Snake.head1 = 16;
     Snake.tail2 = 16;
     Snake.head2 = 16;
@@ -87,23 +87,23 @@ void config_snake(uint8_t matrix[32][32])
     Snake.size = 100;
 }
 
-int snake_play(uint8_t matrix[32][32], int *Dec)
+int snake_play(uint8_t matrix[32][32], int *Dec)//does the snake game play
 {
-    uint8_t byte, app1 = Snake.head1, app2 = Snake.head2;
+    uint8_t byte, app1 = Snake.head1, app2 = Snake.head2; //initializes variables
     int Dir = 0, dec = 0, u = 0, d = 0, l = 0, r = 0, end = 0;
     int i, j, I = 0, J = 0;
-    getDir(&Dir);
-    for(i = 0; i<32; i++)
+    getDir(&Dir);//gets direction
+    for(i = 0; i<32; i++)//runs through matrix
     {
         for(j = 0; j<32; j++)
         {
-            if(Dir == 1 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)
+            if(Dir == 1 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)// if direction is and the snake head is at the matrix location then move the snake head left
             {
                 Put(&Snake, 1);
-                l = 1;
+                l = 1;//sets variable so the snake will be updated at the end of funtion
                 I = i;
                 J = j;
-                if(matrix[i][j-1] == 1)
+                if(matrix[i][j-1] == 1)//if the next spot in the matrix to the left is an apple than set dec =1 and put another apple somewhere 
                 {
                     dec = 1;
                     while(matrix[app1][app2] == 2)
@@ -112,9 +112,9 @@ int snake_play(uint8_t matrix[32][32], int *Dec)
                     }
                     matrix[app1][app2] = 1;
                 }
-                if(matrix[i][j-1] == 2) end = 1;
+                if(matrix[i][j-1] == 2) end = 1;//if next spot on matrix to the left is green then end =1 to end the game
             }
-            if(Dir == 2 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)
+            if(Dir == 2 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)//Does the same thing as left but for the right direction
             {
                 Put(&Snake, 2);
                 r = 1;
@@ -131,7 +131,7 @@ int snake_play(uint8_t matrix[32][32], int *Dec)
                     }
                 if(matrix[i][j+1] == 2) end = 1;
             }
-            if(Dir == 3 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)
+            if(Dir == 3 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)//Does the same thing as left but for the up direction
             {
                 Put(&Snake, 3);
                 u = 1;
@@ -148,7 +148,7 @@ int snake_play(uint8_t matrix[32][32], int *Dec)
                     }
                 if(matrix[i-1][j] == 2) end = 1;
             }
-            if(Dir == 4 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)
+            if(Dir == 4 && matrix[i][j] == 2 && Snake.head1 == i && Snake.head2 == j)//Does the same thing as left but for the down direction
             {
                 Put(&Snake, 4);
                 d = 1;
@@ -165,28 +165,28 @@ int snake_play(uint8_t matrix[32][32], int *Dec)
                     }
                 if(matrix[i+1][j] == 2) end = 1;
             }
-            if(Snake.head1 == i && Snake.head2 == j && dec == 0)
+            if(Snake.head1 == i && Snake.head2 == j && dec == 0)//if an apple wasn't eaten then move the tail in whichever direction it needs to be moved next based on the move_tail array
             {
-               Get(&Snake,&byte);
-               if(byte == 1)
+               Get(&Snake,&byte);//get a byte from the move tail array to see which direction the tail must move in 
+               if(byte == 1)//if 1 then move tail left and set previous tail spot to not green
                {
                    matrix[Snake.tail1][Snake.tail2] = 0;
                    Snake.tail1 = Snake.tail1;
                    Snake.tail2 = Snake.tail2-1;
                }
-                if(byte == 2)
+                if(byte == 2)//if 2 then move tail right and set previous tail spot to not green
                 {
                     matrix[Snake.tail1][Snake.tail2] = 0;
                     Snake.tail1 = Snake.tail1;
                     Snake.tail2 = Snake.tail2+1;
                 }
-                if(byte == 3)
+                if(byte == 3)//if 3 then move tail up and set previous tail spot to not green
                 {
                     matrix[Snake.tail1][Snake.tail2] = 0;
                     Snake.tail1 = Snake.tail1-1;
                     Snake.tail2 = Snake.tail2;
                 }
-                if(byte == 4)
+                if(byte == 4)//if 4 then move tail down and set previous tail spot to not green
                 {
                     matrix[Snake.tail1][Snake.tail2] = 0;
                     Snake.tail1 = Snake.tail1+1;
@@ -195,43 +195,43 @@ int snake_play(uint8_t matrix[32][32], int *Dec)
             }
         }
     }
-    *Dec = dec;
+    *Dec = dec;//send back whether an appe was eaten
     /*if(dec == 1)
     {
         for(i = 0; i<2000000; i++);
             toggle_routine();
     }*/
-    if(end == 1)
+    if(end == 1)//if end is one then reset somethings and return 2 for game over
     {
         joy_dir = 0;
         snake_size = 0;
         return 2;
     }
-    else if(l == 1)
+    else if(l == 1)//if left then move snake head left and turn that spot to green
     {
         Snake.head1 = I;
         Snake.head2 = J-1;
         matrix[I][J-1] = 2;
     }
-    else if(r == 1)
+    else if(r == 1)//if right then move snake head right and turn that spot to green
     {
         Snake.head1 = I;
         Snake.head2 = J+1;
         matrix[I][J+1] = 2;
     }
-    else if(u == 1)
+    else if(u == 1)//if up then move snake head up and turn that spot to green
     {
         Snake.head1 = I-1;
         Snake.head2 = J;
         matrix[I-1][J] = 2;
     }
-    else if(d == 1)
+    else if(d == 1)//if down then move snake head down and turn that spot to green
     {
         Snake.head1 = I+1;
         Snake.head2 = J;
         matrix[I+1][J] = 2;
     }
-    int k,p;
+    int k,p;//prints things to the LCD over UART
     char buf1[16];
     char counter[] = "Snake Size:";
     char clear[] = "|-";
@@ -243,7 +243,7 @@ int snake_play(uint8_t matrix[32][32], int *Dec)
     return 0;
 }
 
-
+//see adc file for extra comments
 void ADC14_GPIO_CONFIG(void)
 {
     //P5.0 and P5.2 -> ADC function

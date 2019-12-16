@@ -2,7 +2,7 @@
  * 12c.c
  *
  *  Created on: Oct 14, 2019
- *      Author: Nick
+ *      Author: Jack
  */
 
 #include "msp.h"
@@ -14,6 +14,7 @@
  * P1.7 --> SCL
  * EUSCI_B0
  */
+//Jack made this for us in a previous lab
 void config_i2c(void) {
     EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST;  // UCSWRST = 1
 
